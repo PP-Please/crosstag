@@ -1,0 +1,4 @@
+# Compilation Files/Folders
+build*
+src*
+!src/main.cpp
