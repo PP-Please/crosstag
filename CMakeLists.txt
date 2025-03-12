@@ -1,11 +1,14 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 4.0)
 project(CrossTag)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(nlohmann_json 3.11.3 REQUIRED)
-...
-add_library(foo ...)
-...
-target_link_libraries(foo PRIVATE nlohmann_json::nlohmann_json)
+include(FetchContent)
+
+FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
+FetchContent_MakeAvailable(json)
+
+add_executable(crosstag src/main.cpp)
+
+target_link_libraries(crosstag PRIVATE nlohmann_json::nlohmann_json)

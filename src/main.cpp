@@ -11,31 +11,37 @@
 #include <objbase.h>
 #include <combaseapi.h>
 #include <winbase.h>
+#include <vector>
+#include <bits/stdc++.h> // unordered map
+#include <unordered_set>
 
-// #include <nlohmann/json.hpp>
-// using json = nlohmann::json;
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
 
 using namespace std;
 
 int main() {
-    try {
-        filesystem::path current_path = filesystem::current_path();
-        // cout << "Current path: " << current_path << endl;
+    filesystem::path current_path = filesystem::current_path();
+    // cout << "Current path: " << current_path << endl;
 
-        /*
-            Load the hidden file containing tags for each file within the directory, or create it if
-            it does not exist. 
-        */
-       HANDLE hFile = CreateFileA("storedTags.json", (GENERIC_READ | GENERIC_WRITE), FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_HIDDEN, NULL);
-        if (hFile == INVALID_HANDLE_VALUE) {
-            cout << "Error: The hidden file was unable to be created or read." << endl;
-            exit(1);
+    /*
+        Load the hidden file containing tags for each file within the directory, or create it if
+        it does not exist. 
+    */
+    HANDLE hFile = CreateFileA("storedTags.json", (GENERIC_READ | GENERIC_WRITE), FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_HIDDEN, NULL);
+    if (hFile == INVALID_HANDLE_VALUE) {
+        cout << "Error: The hidden file was unable to be created or read." << endl;
+        exit(1);
         }
 
-        ifstream tags("storedTags.json");
+    unordered_map<int, vector<string>> allTags;
+
+    try {
+
+        // ifstream tags("storedTags.json");
 
         for (auto const& entry: filesystem::directory_iterator{current_path}) {
-            if (entry.path().filename() == "storedTags.json") continue;
+            if (entry.path().filename() == "storedTags.json" || entry.is_directory()) continue;
     
 
             // cout << "Currently on file named" << entry.path().filename() << endl;
@@ -66,6 +72,9 @@ int main() {
             int fileId;
             if (GetFileInformationByHandle(hFile, &fileInfo)) {
                 fileId = fileInfo.nFileIndexHigh;
+            } else {
+                cout << "Error finding fileId" << endl;
+                exit(1);
             }
 
             CloseHandle(hFile);
@@ -92,6 +101,8 @@ int main() {
                 // cout << "HRESULT for keyword retrieval:" << hr << endl;
                 // cout << keywords.vt << endl;
 
+                vector<string> tags;
+
                 if (SUCCEEDED(hr) && keywords.vt == (VT_LPWSTR|VT_VECTOR)) {
                     
                     // cout << "Successfully got into this loop!" << endl;
@@ -100,20 +111,29 @@ int main() {
 
                     for (ULONG i = 0; i < numKeywords; i++) {
                         /*
+                            This comment is about printing out a string to the terminal. 
                             Currently, the string is a LPSTR (pointer to a string), which is why printing it like
                             below will only print the first character of the tag. Instead, we add a wide string
-                            literal interpret as a wchar_t*. If we passed it alone like belo, the compiler interprets
+                            literal interpret as a wchar_t*. If we passed it alone like below, the compiler interprets
                             the tag as a pointer and thus through conversion may treat it as a single character rather
                             than an array of wchar_t characters.
                             wcout << keywords.calpstr.pElems[i] << endl;
                         */
-                        wcout << L"" << keywords.calpwstr.pElems[i] << endl;
+                       wstring ws(keywords.calpwstr.pElems[i]);
+                       tags.push_back(string(ws.begin(), ws.end()));
+                        // wcout << L"" << keywords.calpwstr.pElems[i] << endl;
                     }
 
                 }
 
+                // for (int i = 0; i < tags.size(); i++) {
+                //     cout << tags[i] << endl;
+                // }
+
                 PropVariantClear(&keywords);
                 store->Release();
+
+                allTags.insert({fileId, tags});
             }
             CoUninitialize();
         }
@@ -121,6 +141,70 @@ int main() {
         cerr << "Error: " << e.what() << endl;
     }
 
-}
+    /*
+        Check if the tags have already been saved to the storedTags JSON file and if not, create the JSON object
+        to be added to the file.
+    */
 
-// g++ -o main main.cpp -lole32 -loleaut32 -lpropsys
+    fstream jsonData("storedTags.json");
+
+    json data;
+    if (jsonData.peek() == EOF) {
+        data = json::object();
+    } else {
+        data = json::parse(jsonData);
+    }
+
+    for (auto mapIt = allTags.begin(); mapIt != allTags.end(); mapIt++) {
+        for (auto& it : data) {
+            /*
+                Loop checking if there exists an existing fileId which has already been saved before. If not, we can just add
+                all the tags into a new object.
+            */
+
+            for (int i = 0; i < mapIt->second.size(); i++) {
+                cout << mapIt->second[i] << endl;
+            }
+            
+            if (it.contains("fileId") && it["fileId"] == mapIt->first) {
+                /*
+                    Add all the already saved tags into an unordered set, and then iterate through the vector containing
+                    the tags to be added to see if they already exist. If they do, continue and if not, add them to the list.
+                    I decided to add to an unordered set because for m already saved tags and n tags to be saved, if we were
+                    to use a traditional loop, the worse case would mean we check the m tags n times i.e. O(mn) complexity.
+                    If we were to save it into a set instead however, we would need O(m) complexity to add everything to the
+                    set and lookups are O(1).
+                */
+               unordered_set<string> existingTags;
+
+               for (const auto& tag : it["Tags"]) {
+                    cout << tag << endl;
+                    existingTags.insert(tag);
+                }
+
+                for (const auto& tag : mapIt->second) {
+                    if (existingTags.find(tag) == existingTags.end()) {
+                        existingTags.insert(tag);
+                        it["tags"].push_back(tag);
+                    }
+                }
+            } else {
+                json tagsToAdd;
+                tagsToAdd["fileId"] = mapIt->first;
+                tagsToAdd["Tags"] = mapIt->second;
+                data.push_back(tagsToAdd);
+            }
+        }
+    }
+
+    jsonData << data.dump(4);
+    jsonData.close();
+
+    return 0;
+}
+/*
+    g++ -o main main.cpp -lole32 -loleaut32 -lpropsys
+
+    cmake -G "Unix Makefiles" ..
+    make    
+*/
