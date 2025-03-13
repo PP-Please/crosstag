@@ -1,4 +1,4 @@
 # Compilation Files/Folders
 build*
-src*
-!src/main.cpp
+src/main.exe
+src/Resume as of June 2024.docx
