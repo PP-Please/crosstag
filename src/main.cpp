@@ -10,6 +10,7 @@
 // #endif
 
 #include <nlohmann/json.hpp>
+#include <sqlite3.h>
 using json = nlohmann::json;
 
 using namespace std;
@@ -22,7 +23,12 @@ int main() {
         it does not exist. 
     */
     // createJsonTagsFile();
-    int rc = sqlite3_open()
+    sqlite3 *db;
+    int rc = sqlite3_open("dbTags.db", &db);
+    if (rc) {
+        cout << "Error: database could not be opened or created" << endl;
+        return(1);
+    }
 
     unordered_map<int, vector<string>> allTags;
 
@@ -43,7 +49,7 @@ int main() {
     ifstream jsonData("storedTags.json");
     if (!jsonData.is_open()) {
         cout << "Error: file could not be opened." << endl;
-        exit(1);
+        return(1);
     }
     json data;
     if (jsonData.peek() == EOF) {
@@ -107,6 +113,7 @@ int main() {
     jsonOutput << data.dump(4); // Using dump with indentation
     jsonOutput.close();
 
+    sqlite3_close(db);
     return 0;
 }
 /*
