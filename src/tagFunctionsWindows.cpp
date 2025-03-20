@@ -1,3 +1,5 @@
+#include "winFunctions.h"
+
 #define INITGUID
 // #include <iostream>
 #include <windows.h>
@@ -10,9 +12,8 @@
 #include <vector>
 #include <bits/stdc++.h> // unordered map
 #include <unordered_set>
-#include "winFunctions.h"
 #include <filesystem>
-#include <shobjidl.h>
+#include <shobjidl.h> // SHGetPropertyStoreFromParsingName()
 
 using namespace std;
 

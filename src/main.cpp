@@ -1,22 +1,13 @@
 #include <iostream>
 #include <filesystem>
-#include <shobjidl.h> // SHGetPropertyStoreFromParsingName()
 #include <fstream>
 #include <unordered_set>
 #include <vector>
 
-#ifdef __WIN32
-// #define INITGUID
-// #include <windows.h>
-// #include <propkey.h>
-// #include <propvarutil.h>
-// #include <propsys.h>
-// #include <objbase.h>
-// #include <combaseapi.h>
-// #include <winbase.h>
-// #include <bits/stdc++.h> // unordered map
-#include "winFunctions.h"
-#endif
+#include "tagFunctions.h"
+// #ifdef __WIN32
+// #elif __APPLE__
+// #endif
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
@@ -30,7 +21,8 @@ int main() {
         Load the hidden file containing tags for each file within the directory, or create it if
         it does not exist. 
     */
-    createJsonTagsFile();
+    // createJsonTagsFile();
+    int rc = sqlite3_open()
 
     unordered_map<int, vector<string>> allTags;
 
