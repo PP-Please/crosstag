@@ -1,23 +1,23 @@
 Table drives {
-  drive_uuid integer [primary key]
-  drive_id_win dword [unique]
+  drive_uuid integer [serial, primary key]
+  drive_id_win integer [unique]
   drive_id_mac string [unique]
   drive_name string [not null]
 }
 
 Table files {
-  file_id integer [primary key]
+  file_uuid integer [serial, primary key]
   file_id_win integer [unique]
   file_id_mac integer [unique]
-  drive_id integer [not null]
+  drive_uuid string [not null]
   file_path string [not null]
 }
 
-Ref: drives.drive_uuid < files.drive_id
+Ref: drives.drive_uuid < files.drive_uuid
 
 Table tags {
   file_id integer [primary key]
   tag_name string [not null]
 }
 
-Ref: files.file_id < tags.file_id
+Ref: files.file_uuid < tags.file_id
