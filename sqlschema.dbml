@@ -16,7 +16,8 @@ Table files {
 Ref: drives.drive_uuid < files.drive_uuid
 
 Table tags {
-  file_id integer [primary key]
+  tag_uuid integer [serial, primary key]
+  file_id integer [not null]
   tag_name string [not null]
 }
 

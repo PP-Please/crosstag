@@ -15,8 +15,17 @@
 using namespace std;
 
 int main() {
-    filesystem::path current_path = filesystem::current_path();
+    wstring filepath;
+    cout << "Enter path: " << endl;
+    getline(wcin, filepath);
+    // wstring_convert<codecvt_utf8<wchar_t>> conv;
+    // wstring filepath_utf16 = conv.from_bytes(filepath);
 
+    // filesystem::path current_path(filepath_utf16);
+    filesystem::path current_path(filepath);
+
+    // filesystem::path current_path2 = filesystem::current_path();
+    // cout << current_path2 << endl;
     /*
         Load the hidden file containing tags for each file within the directory, or create it if
         it does not exist. 
@@ -106,9 +115,3 @@ int main() {
     sqlite3_close(db);
     return 0;
 }
-/*
-    g++ -o main main.cpp -lole32 -loleaut32 -lpropsys
-
-    cmake -G "Unix Makefiles" ..
-    make    
-*/
